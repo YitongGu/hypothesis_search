@@ -7,11 +7,12 @@ import openai
 import time
 
 if cfg.use_azure_api:
-    openai.api_type = cfg.azure.openai_api_type
-    print("Using Azure API", openai.api_type, "version", cfg.azure.openai_api_version, "base", cfg.azure.openai_api_base, "key", cfg.azure.openai_api_key)
-    openai.api_version = cfg.azure.openai_api_version
-    openai.api_base = cfg.azure.openai_api_base
-    openai.api_key = cfg.azure.openai_api_key
+    # openai.api_type = cfg.azure.openai_api_type
+    # print("Using Azure API", openai.api_type, "version", cfg.azure.openai_api_version, "base", cfg.azure.openai_api_base, "key", cfg.azure.openai_api_key)
+    # openai.api_version = cfg.azure.openai_api_version
+    # openai.api_base = cfg.azure.openai_api_base
+    # openai.api_key = cfg.azure.openai_api_key
+    pass
 
 cache_path = "resources/summarization_cache.json"
 

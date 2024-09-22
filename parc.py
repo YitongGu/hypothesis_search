@@ -285,6 +285,8 @@ def evaluate(gpt, dataset, example_tasks=None, dry_run=True):
                 if not cfg.language_generation.read_from_file:
                     rets = language_generation(gpt, task, dry_run=dry_run, example_tasks=example_tasks)[0]
                     empty_desc = {'description_input': '', 'description_output_grid_size': '', 'description_output': ''}
+                    for d in rets:
+                        print(d)
                     descriptions = [d['parsed'] if isinstance(d['parsed'], dict) else empty_desc for d in rets]
                 if cfg.directly_output_grid:
                     assert len(descriptions) == 1
@@ -616,7 +618,7 @@ if __name__ == '__main__':
         filtered_dataset.append(task)
         filtered_results.append(results[i])
     
-    # print('Total number of tasks', len(filtered_dataset))
+    print('Total number of tasks', len(filtered_dataset))
 
     if cfg.load_single_task < 0:
         if len(cfg.load_tasks) > 0:

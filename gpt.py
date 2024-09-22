@@ -1,4 +1,4 @@
-import openai
+# import openai
 import os
 import tiktoken
 import time
@@ -7,9 +7,14 @@ from config import cfg
 from pprint import pprint
 from collections import defaultdict
 
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
 def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
     """Returns the number of tokens used by a list of messages."""
     try:
+        if model == 'llama-2-13b-chat':
+            model = 'llama-2-13b-chat'
         if model == 'gpt4-0613':
             model = 'gpt-4-0314'
         if model == 'gpt35-0613' or model == 'gpt35-0613-16k':
@@ -21,6 +26,8 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
     if model == "gpt-3.5-turbo" or model == "gpt35-0613":
         print("Warning: gpt-3.5-turbo may change over time. Returning num tokens assuming gpt-3.5-turbo-0301.")
         return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301")
+    elif model == 'llama-2-13b-chat':
+        return num_tokens_from_messages(messages, model='llama-2-13b-chat')
     elif model == "gpt-4":
         print("Warning: gpt-4 may change over time. Returning num tokens assuming gpt-4-0314.")
         return num_tokens_from_messages(messages, model="gpt-4-0314")
@@ -31,7 +38,9 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
         tokens_per_message = 3
         tokens_per_name = 1
     else:
-        raise NotImplementedError(f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
+        # raise NotImplementedError(f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
+        tokens_per_message = 1
+        tokens_per_name = 1
     num_tokens = 0
     for message in messages:
         num_tokens += tokens_per_message
@@ -48,6 +57,7 @@ def num_tokens_from_text(text, model="gpt-3.5-turbo-0301"):
     except KeyError:
         print(f"Warning: model {model} not found. Using cl100k_base encoding.")
         encoding = tiktoken.get_encoding("cl100k_base")
+    print(text)
     return len(encoding.encode(text))
 
 
@@ -59,8 +69,9 @@ def get_model_price(model_name):
         prompt_price = 0.03
         completion_price = 0.06
     else:
-        raise NotImplementedError(f"estimate_price() is not implemented for model {model_name}.")
-    
+        # raise NotImplementedError(f"estimate_price() is not implemented for model {model_name}.")
+        prompt_price = 0
+        completion_price = 0
     return prompt_price, completion_price
 
 def estimate_price(model_name, num_tokens, num_completions, max_tokens):
@@ -95,20 +106,21 @@ class GPT():
         # Load the cache JSON file, if cache file exists. Else, cache is {}
         if os.path.exists(cache_file):
             while os.path.exists(self.cache_file + ".tmp") or os.path.exists(self.cache_file + ".lock"):
-                time.sleep(0.1)
+                # time.sleep(0.1)
+                pass
             with open(cache_file, "r") as f:
                 self.cache = json.load(f)
         else:
             self.cache = {}
 
-        if cfg.use_azure_api:
-            openai.api_type = cfg.azure.openai_api_type
-            print("Using Azure API", openai.api_type, "version", cfg.azure.openai_api_version, "base", cfg.azure.openai_api_base, "key", cfg.azure.openai_api_key)
-            openai.api_version = cfg.azure.openai_api_version
-            openai.api_base = cfg.azure.openai_api_base
-            openai.api_key = cfg.azure.openai_api_key
-        else:
-            openai.organization, openai.api_key = openai_key.split(":")
+        # if cfg.use_azure_api:
+        #     openai.api_type = cfg.azure.openai_api_type
+        #     print("Using Azure API", openai.api_type, "version", cfg.azure.openai_api_version, "base", cfg.azure.openai_api_base, "key", cfg.azure.openai_api_key)
+        #     openai.api_version = cfg.azure.openai_api_version
+        #     openai.api_base = cfg.azure.openai_api_base
+        #     openai.api_key = cfg.azure.openai_api_key
+        # else:
+        #     openai.organization, openai.api_key = openai_key.split(":")
 
         self.stats_group = {}
         self.last_call_time = {}
@@ -124,6 +136,76 @@ class GPT():
                     value = round(value, 4)
                 print(f"    {key}: {value}")
 
+
+    def generate_response(model_name, messages, max_tokens, temperature, presence_penalty, num_completions, stop=None):
+        # login to the hugging_face
+        import huggingface_hub
+        token = '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'
+        # huggingface_hub.login(token = token)
+        
+        # Convert the messages into a single string (assuming messages is a list of dictionaries)
+        # You might need to adjust this based on how your messages are formatted
+        prompt = ""
+        for message in messages:
+            # print(message['role'])
+            prompt += f"{message['role']}: {message['content']}\n"
+        
+        model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
+        from transformers import LlamaForCausalLM, LlamaTokenizer
+        from transformers import PreTrainedTokenizerFast, pipeline
+
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(model_name)
+        # model =LlamaForCausalLM.from_pretrained(model_id)
+        model = LlamaForCausalLM.from_pretrained(model_name, device_map='auto', torch_dtype=torch.float16)
+        # model = LlamaForCausalLM()
+        # Tokenize the input prompt
+        # inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+        # print ("\n\n\n\n\n\n\n\n\n\nnum_completions:",num_completions)
+        # print(prompt)
+        # Generate response
+        # print(messages)
+        formatted = tokenizer.apply_chat_template(messages, tokenize=False)
+        # print(type(formatted))
+        
+        pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, device_map="auto")
+        # print(
+        #     """
+            
+            
+        #    input
+           
+           
+        #     """
+        # )
+        # print(formatted)
+        outputs = pipe(formatted,
+                    max_new_tokens=10000,          
+                    temperature=temperature,  
+                    num_return_sequences=1,  
+                    do_sample=True, 
+                    stopping_criteria=stop)
+
+        
+        # print(
+        #     """
+            
+            
+            
+        #    response
+            
+            
+            
+        #     """
+        # )
+        # print(type(outputs[0]['generated_text']), outputs[0]['generated_text'])
+        # print(outputs)
+        output_txt = outputs[0]['generated_text'].replace(formatted, "").strip()
+        # Decode the output
+        # print(output_txt)
+        # responses = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
+
+        return output_txt
+    
     def generate(self,
         messages_or_prompt, num_completions=8, max_tokens=500, temperature=0.5, presence_penalty=0.0,
         stop=["\ndef"], indented=True, indented_after_first_line=False, require=None, cache_key=None,
@@ -221,8 +303,8 @@ class GPT():
                 result += [line]
             return result
 
-        if model_name is None:
-            model_name = "gpt-3.5-turbo-0301"
+        # if model_name is None:
+        #     model_name = "meta-llama/Llama-2-13b-chat-hf"
         if verbose:
             print(messages)
             print("-----")
@@ -240,6 +322,7 @@ class GPT():
             max_context_length = 16383
         elif model_name in ['gpt-4', 'gpt-4-0314', 'gpt4-0613']:
             max_context_length = 8191
+        max_context_length = max_tokens * num_completions
         if dry_run:
             return {
                 **basic_info,
@@ -275,11 +358,12 @@ class GPT():
             parse_response = parsing_func
 
         def compute_completion_cost(rets):
-            _, completion_cost = get_model_price(model_name)
-            num_tokens = 0
-            for ret in rets:
-                num_tokens += num_tokens_from_text(ret['raw'])
-            return num_tokens * completion_cost / 1000
+            return 1
+            # _, completion_cost = get_model_price(model_name)
+            # num_tokens = 0
+            # for ret in rets:
+            #     num_tokens += num_tokens_from_text(ret['raw'])
+            # return num_tokens * completion_cost / 1000
 
         if cache_key in self.cache:
             if len(self.cache[cache_key]) < num_completions:
@@ -318,45 +402,76 @@ class GPT():
                 try:
                     time.sleep(1)
                     if logit_bias is None:
-                        response = openai.ChatCompletion.create(
-                            model=None if cfg.use_azure_api else model_name,
-                            engine=None if not cfg.use_azure_api else model_name,
+                        # response = openai.ChatCompletion.create(
+                        #     model=None if cfg.use_azure_api else model_name,
+                        #     engine=None if not cfg.use_azure_api else model_name,
+                        #     messages=messages,
+                        #     max_tokens=max_tokens,
+                        #     temperature=temperature,
+                        #     presence_penalty=presence_penalty,
+                        #     stop=stop,
+                        #     n=num_completions,
+                        # )
+                        completions = []
+                        for i in range(num_completions):
+                            response = self.generate_response(
+                                # model=None if cfg.use_azure_api else model_name,
+                                # engine=None if not cfg.use_azure_api else model_name,
+                                messages=messages,
+                                max_tokens=max_tokens,
+                                temperature=temperature,
+                                presence_penalty=presence_penalty,
+                                stop=stop,
+                                num_completions=num_completions,
+                            )
+                            completion = {"message": {
+                                                    "content": response,
+                                                    "role": "assistant"
+                                                }}
+                            completions.append(completion)
+                        # print("Completions:\n", completions)
+                        
+                    else:
+                        response = self.generate_response(
+                            # model=None if cfg.use_azure_api else model_name,
+                            # engine=None if not cfg.use_azure_api else model_name,
                             messages=messages,
                             max_tokens=max_tokens,
                             temperature=temperature,
                             presence_penalty=presence_penalty,
                             stop=stop,
-                            n=num_completions,
+                            num_completions=num_completions,
                         )
-                        completions = response['choices']
-                    else:
-                        response = openai.ChatCompletion.create(
-                            model=None if cfg.use_azure_api else model_name,
-                            engine=None if not cfg.use_azure_api else model_name,
-                            max_tokens=max_tokens,
-                            temperature=temperature,
-                            presence_penalty=presence_penalty,
-                            stop=stop,
-                            n=num_completions,
-                            logit_bias=logit_bias
-                        )
-                        completions = response['choices']
-                    recorded_completion_tokens += response['usage']['completion_tokens']
+                        completions = {      
+                                        "message": {
+                                                "content": response,
+                                                "role": "assistant"
+                                            }}
+                        
+                        
+                    # try:
+                    #     recorded_completion_tokens += response['usage']['completion_tokens']
+                    # except Exception as e:
+                    #     print("recorded_completion_tokens says:", e)
+                    recorded_completion_tokens += len(response)
                     self.exponential_backoff = 1
                     break
-                except openai.error.RateLimitError:
-                    print("Rate limit reached. Waiting before retrying...")
-                    time.sleep(16 * self.exponential_backoff)
-                    self.exponential_backoff *= 2
-                except openai.error.APIError as e:
-                    print(f"OpenAI API returned an API Error: {e}")
-                    pass
+                # except openai.error.RateLimitError:
+                #     print("Rate limit reached. Waiting before retrying...")
+                #     time.sleep(16 * self.exponential_backoff)
+                #     self.exponential_backoff *= 2
+                # except openai.error.APIError as e:
+                #     print(f"OpenAI API returned an API Error: {e}")
+                #     pass
+                except Exception as e:
+                    print("After loop:", e)
+                
             for completion in completions:
                 results.append({
                     'parsed': parse_response(completion['message']['content']),
                     'raw': completion['message']['content'],
                 })
-
+            print('')
             end_time = time.time()
             print('API Call time elapsed:', end_time - start_time, 'Num tokens:', recorded_completion_tokens)
 
@@ -389,6 +504,7 @@ class GPT():
             total_tokens -= num_completions * max_tokens
         
         gpt_stats_group.completion_cost_real += compute_completion_cost(results)
+        # print("generate finishes here. The result is:\n", results)
         return results
 
 

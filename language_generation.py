@@ -98,7 +98,7 @@ def language_generation(model, dataset, dry_run=True, example_tasks=None):
         results_this = model.generate(messages_or_prompt=messages, 
                                         num_completions=cfg.language_generation.num_completions, 
                                         max_tokens=cfg.language_generation.max_tokens, 
-                                        rate_limit_tokens=4800,
+                                        rate_limit_tokens=10000,
                                         dry_run=dry_run, 
                                         indented=False,
                                         indented_after_first_line=False,

@@ -8,11 +8,16 @@ from collections import Counter
 import math
 np.int = int
 
-def transform_grid(input_grid: np.ndarray) -> np.ndarray:
-    size = input_grid.shape[1] * 2 - 1
-    output_grid = np.zeros((size, size), dtype=int)
-    
-    for i in range(input_grid.shape[1]):
-        output_grid[i:size-i, i] = input_grid[0,i]
+assistant
 
-    return np.fliplr(output_grid)
+import numpy as np
+
+def transform_grid(input_grid: np.ndarray) -> np.ndarray:
+    rows, cols = input_grid.shape
+    output_grid = np.zeros((rows, cols), dtype=int)
+    
+    for i in range(rows-1):
+        output_grid[i] = input_grid[i+1]
+    output_grid[rows-1] = 0
+    
+    return output_grid

@@ -1,4 +1,4 @@
-only_allow_cache: True
+only_allow_cache: False
 use_azure_api: False
 azure:
   openai_api_type: azure
@@ -21,8 +21,8 @@ load_single_task: -1
 load_tasks: []
 num_examples: -1
 start_idx: 0
-num_completions: 8
-max_tokens: 1000
+num_completions: 1
+max_tokens: 10000
 add_hint: False
 # feedbacks
 num_feedbacks: 0
@@ -31,9 +31,9 @@ only_last_feedback: False
 feedback_show_grid_diff: False
 feedback_revise_language: False
 # should be set to true for new experiments
-parse_python_tag: False
+parse_python_tag: True
 
-model_name: gpt-3.5-turbo-0301
+model_name: llama-2-13b-chat
 feedback_model_name: same
 visualize: False
 description_id_override_json: resources/description_id_override.json
@@ -79,7 +79,7 @@ language_generation:
   temperature: 0.7
   example_dataset: larc
   example_task_ids: [139]
-  max_tokens: 300
+  max_tokens: 10000
   manually_select_file: ''
   visualize_every_solution: True
   read_from_file: ''

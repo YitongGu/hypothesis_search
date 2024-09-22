@@ -121,6 +121,10 @@ def get_arc1d_dataset():
     if os.path.exists(cache_path):
         with open(cache_path, 'rb') as f:
             tasks = pickle.load(f)
+            # for task in tasks:
+            #     # print(task['task_info'].keys())
+            #     if '1d_flip' in task['task_info']['filename']:
+            #         print (task['task_info']['task_id'], task['task_info']['filename'])
         return tasks
     else:
         data_path = cfg.arc1d_dataset_path
