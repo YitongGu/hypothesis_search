@@ -139,8 +139,6 @@ class GPT():
 
     def generate_response(model_name, messages, max_tokens, temperature, presence_penalty, num_completions, stop=None):
         # login to the hugging_face
-        import huggingface_hub
-        token = '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'
         # huggingface_hub.login(token = token)
         
         # Convert the messages into a single string (assuming messages is a list of dictionaries)
@@ -283,7 +281,8 @@ class GPT():
                     end_idx = len(lines)
                     for i, l in enumerate(lines):
                         if 'assistant' in l:
-                            lines[i] = ''
+                            # lines[i] = ''
+                            continue
                         if l.startswith('```python'):
                             has_python_tag = True
                             start_idx = i
