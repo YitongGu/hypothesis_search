@@ -180,8 +180,8 @@ np.int = int
     impl_src = headers + '\n' + impl
 
     
-    while os.path.exists('temp/impl.py.lock'):
-        time.sleep(0.1)
+    # while os.path.exists('temp/impl.py.lock'):
+    #     time.sleep(0.1)
 
     open('temp/impl.py.lock', 'w').close()
     with open('temp/impl.py', 'w') as f:

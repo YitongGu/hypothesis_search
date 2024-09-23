@@ -201,7 +201,7 @@ class GPT():
         # print(outputs)
         output_txt = outputs[0]['generated_text'].replace(formatted, "").strip()
         # Decode the output
-        # print(output_txt)
+        print(output_txt)
         # responses = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
 
         return output_txt
@@ -282,6 +282,8 @@ class GPT():
                     start_idx = 0
                     end_idx = len(lines)
                     for i, l in enumerate(lines):
+                        if 'assistant' in l:
+                            lines[i] = ''
                         if l.startswith('```python'):
                             has_python_tag = True
                             start_idx = i
@@ -301,6 +303,8 @@ class GPT():
                 if require is not None and line.strip() != "" and require not in line:
                     break
                 result += [line]
+            print("code parser result:")
+            print(result)
             return result
 
         # if model_name is None:
@@ -426,27 +430,29 @@ class GPT():
                             )
                             completion = {"message": {
                                                     "content": response,
-                                                    "role": "assistant"
+                                                    "role": "something"
                                                 }}
                             completions.append(completion)
                         # print("Completions:\n", completions)
                         
                     else:
-                        response = self.generate_response(
-                            # model=None if cfg.use_azure_api else model_name,
-                            # engine=None if not cfg.use_azure_api else model_name,
-                            messages=messages,
-                            max_tokens=max_tokens,
-                            temperature=temperature,
-                            presence_penalty=presence_penalty,
-                            stop=stop,
-                            num_completions=num_completions,
-                        )
-                        completions = {      
-                                        "message": {
-                                                "content": response,
-                                                "role": "assistant"
-                                            }}
+                        completions = []
+                        for i in range(num_completions):
+                            response = self.generate_response(
+                                # model=None if cfg.use_azure_api else model_name,
+                                # engine=None if not cfg.use_azure_api else model_name,
+                                messages=messages,
+                                max_tokens=max_tokens,
+                                temperature=temperature,
+                                presence_penalty=presence_penalty,
+                                stop=stop,
+                                num_completions=num_completions,
+                            )
+                            completion = {"message": {
+                                                    "content": response,
+                                                    "role": "something"
+                                                }}
+                            completions.append(completion)
                         
                         
                     # try:

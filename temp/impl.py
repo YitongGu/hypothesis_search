@@ -8,16 +8,17 @@ from collections import Counter
 import math
 np.int = int
 
-assistant
+
 
 import numpy as np
 
 def transform_grid(input_grid: np.ndarray) -> np.ndarray:
-    rows, cols = input_grid.shape
-    output_grid = np.zeros((rows, cols), dtype=int)
-    
-    for i in range(rows-1):
-        output_grid[i] = input_grid[i+1]
-    output_grid[rows-1] = 0
-    
+    color = input_grid[0][0]
+    output_grid = np.zeros_like(input_grid)
+    for i in range(input_grid.shape[0]):
+        for j in range(input_grid.shape[1]):
+            if i == 0:
+                output_grid[i][j] = color
+            else:
+                output_grid[i][j] = input_grid[i-1][j]
     return output_grid
