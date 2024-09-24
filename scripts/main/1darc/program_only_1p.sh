@@ -1,5 +1,5 @@
 export SKIP_PRESS_Y=1
-python parc.py add_hint False  num_completions 80 \
+python parc.py add_hint False  num_completions 8 \
  dataset arc1d \
  visualize False \
  split_path resources/splits/1d_move_1p.json \

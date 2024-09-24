@@ -104,14 +104,15 @@ class GPT():
         self.cache_file = cache_file
         self.exponential_backoff = 1
         # Load the cache JSON file, if cache file exists. Else, cache is {}
-        if os.path.exists(cache_file):
-            while os.path.exists(self.cache_file + ".tmp") or os.path.exists(self.cache_file + ".lock"):
-                # time.sleep(0.1)
-                pass
-            with open(cache_file, "r") as f:
-                self.cache = json.load(f)
-        else:
-            self.cache = {}
+        # if os.path.exists(cache_file):
+        #     while os.path.exists(self.cache_file + ".tmp"):
+        #         # or os.path.exists(self.cache_file + ".lock"):
+        #         time.sleep(0.1)
+        #         # pass
+        #     with open(cache_file, "r") as f:
+        #         self.cache = json.load(f)
+        # else:
+        self.cache = {}
 
         # if cfg.use_azure_api:
         #     openai.api_type = cfg.azure.openai_api_type
@@ -281,8 +282,8 @@ class GPT():
                     end_idx = len(lines)
                     for i, l in enumerate(lines):
                         if 'assistant' in l:
-                            # lines[i] = ''
-                            continue
+                            lines[i] = ''
+                            # continue
                         if l.startswith('```python'):
                             has_python_tag = True
                             start_idx = i
@@ -483,7 +484,8 @@ class GPT():
             # Save updated cache - reopen in case multiple processes running
             # Save to a temp file first, then rename
             # Check if a temp file exists, and if so, wait for it to be deleted
-            while os.path.exists(self.cache_file + ".tmp") or os.path.exists(self.cache_file + ".lock"):
+            while os.path.exists(self.cache_file + ".tmp"):
+            # or os.path.exists(self.cache_file + ".lock"):
                 time.sleep(0.1)
             start_time = time.time()
             # create an empty file to indicate that we are writing to the cache
